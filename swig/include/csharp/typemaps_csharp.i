@@ -14,6 +14,7 @@
 
 %include "typemaps.i"
 %include "arrays_csharp.i"
+%include "csharp_strings.i"
 
 /* CSHARP TYPEMAPS */
 
@@ -87,17 +88,6 @@ OGRErrMessages( int rc ) {
  */
 
 %pragma(csharp) modulecode=%{
-  internal static byte[] StringToUtf8Bytes(string str)
-  {
-    if (str == null)
-      return null;
-
-    int bytecount = System.Text.Encoding.UTF8.GetMaxByteCount(str.Length);
-    byte[] bytes = new byte[bytecount + 1];
-    System.Text.Encoding.UTF8.GetBytes(str, 0, str.Length, bytes, 0);
-    return bytes;
-  }
-
   internal unsafe static string Utf8BytesToString(IntPtr pNativeData)
   {
     if (pNativeData == IntPtr.Zero)
@@ -221,7 +211,7 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
     public StringListMarshal(string[] ar) {
       _ar = new IntPtr[ar.Length+1];
       for (int cx = 0; cx < ar.Length; cx++) {
-	      _ar[cx] = StringToUtf8Unmanaged(ar[cx]);
+	      _ar[cx] = $modulePINVOKE.StringToUtf8Unmanaged(ar[cx]);
       }
       _ar[ar.Length] = IntPtr.Zero;
     }
@@ -230,27 +220,6 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
           System.Runtime.InteropServices.Marshal.FreeHGlobal(_ar[cx]);
       }
       GC.SuppressFinalize(this);
-    }
-
-    static IntPtr StringToUtf8Unmanaged(string str) {
-        if (str == null)
-            return IntPtr.Zero;
-
-        int byteCount = System.Text.Encoding.UTF8.GetByteCount(str);
-        IntPtr unmanagedString = Marshal.AllocHGlobal(byteCount + 1);
-
-        unsafe
-        {
-            byte* ptr = (byte*)unmanagedString.ToPointer();
-            fixed (char *pStr = str)
-            {
-                System.Text.Encoding.UTF8.GetBytes(pStr, str.Length, ptr, byteCount);
-                // null-terminate
-                ptr[byteCount] = 0;
-            }
-        }
-
-        return unmanagedString;
     }
   }
 %}
@@ -475,24 +444,6 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
 }
 
 %apply (int inout[ANY]) {int *pList};
-
-/*
- * Typemap for const char *utf8_string
- */
-%typemap(csin) (const char *utf8_string) "$module.StringToUtf8Bytes($csinput)"
-%typemap(imtype, out="IntPtr") (const char *utf8_string) "byte[]"
-%typemap(out) (const char *utf8_string) %{ $result = $1; %}
-%typemap(csout, excode=SWIGEXCODE) (const char *utf8_string) {
-        /* %typemap(csout) (const char *utf8_string) */
-        IntPtr cPtr = $imcall;
-        string ret = $module.Utf8BytesToString(cPtr);
-        $excode
-        return ret;
-}
-
-%apply ( const char *utf8_string ) {
-    const char* GetFieldAsString
-};
 
 /*
  * Typemap for double *defaultval.

@@ -16,6 +16,17 @@ namespace testapp
             RunTest("ThreadLocalConfigOption", Gdal.GetThreadLocalConfigOption, Gdal.SetThreadLocalConfigOption);
             RunTest("ThreadLocalConfigOption", (k, d) => Gdal.GetPathSpecificOption("/", k, d), (k, v) => Gdal.SetPathSpecificOption("/", k, v));
             RunTest("Credential", (k, d) => Gdal.GetCredential("/", k, d), (k, v) => Gdal.SetCredential("/", k, v));
+
+            XMLNode node = new XMLNode(XMLNodeType.CXT_Element, "TestElement");
+            node.SetXMLValue(".", UnicodeString);
+            var serializedXml = node.SerializeXMLTree();
+            var expectedXml = $"<TestElement>{UnicodeString}</TestElement>";
+            AssertEqual(expectedXml, serializedXml?.TrimEnd('\n'), $"{nameof(XMLNode)}.{nameof(node.SerializeXMLTree)}");			
+			
+            var gcp = new GCP(0, 0, 0, 0, 0, UnicodeString, "Id");
+            AssertEqual(gcp.Info, UnicodeString, $"{nameof(GCP)}.{nameof(gcp.Info)}");
+            gcp.Id = UnicodeString;
+            AssertEqual(gcp.Id, UnicodeString, $"{nameof(GCP)}.{nameof(gcp.Id)}");
         }
 
         private static void RunTest(string name, Func<string, string, string> getter, Action<string, string> setter)
