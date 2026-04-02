@@ -101,6 +101,17 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
 
     return unmanagedString;
   }
+  
+  public static byte[] StringToUtf8Bytes(string str)
+  {
+    if (str == null)
+      return null;
+
+    int bytecount = System.Text.Encoding.UTF8.GetByteCount(str);
+    byte[] bytes = new byte[bytecount + 1];
+    System.Text.Encoding.UTF8.GetBytes(str, 0, str.Length, bytes, 0);
+    return bytes;
+  }
 %}
 
 %insert(runtime) %{
@@ -118,7 +129,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 
 /* Changing csin and imtype typemaps for string types defined by SWIG in csharp.swg */
 
-%typemap(imtype) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "IntPtr"
+%typemap(imtype, out="IntPtr") (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "byte[]"
 
 %typemap(in) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
   $1 = ($1_ltype)$input;
@@ -129,7 +140,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
   $result = SWIG_csharp_string_callback((const char *)$1);
 %}
 
-%typemap(csin) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "$modulePINVOKE.StringToUtf8Unmanaged($csinput)"
+%typemap(csin) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "$modulePINVOKE.StringToUtf8Bytes($csinput)"
 
 %typemap(csout, excode=SWIGEXCODE) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
   {
