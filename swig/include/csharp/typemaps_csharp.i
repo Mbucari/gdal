@@ -462,11 +462,6 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
 %typemap(csin) (OGRLayerShadow **ppoBelongingLayer)  "ref $csinput"
 
 /******************************************************************************
- * Band.AdviseRead and Dataset.AdviseRead typemaps                            *
- *****************************************************************************/
-%apply (int *INOUT) {int *buf_xsize, int *buf_ysize};
-
-/******************************************************************************
  * SpatialReference.FindMatches                                               *
  *****************************************************************************/
 %apply (int *hasval) {int *nvalues};

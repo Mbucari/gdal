@@ -191,8 +191,29 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
       GC.KeepAlive(this);
       return retval;
   }
+  public AsyncReader BeginAsyncReader(int xOff, int yOff, int xSize, int ySize, CSTYPE[] buffer,
+     int buf_xsize, int buf_ysize, int bandCount, int[] bandMap, int pixelSpace, int lineSpace,
+     int bandSpace, string[] options) {
+     GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+     try {
+        AsyncReader reader = BeginAsyncReader(xOff, yOff, xSize, ySize, handle.AddrOfPinnedObject(),
+        buf_xsize, buf_ysize, GDALTYPE, bandCount, bandMap, pixelSpace, lineSpace, bandSpace, options);
+        if (reader == null) {
+           handle.Free();
+           return null;
+        }
+        return new $modulePINVOKE.AsyncReaderWrapper(handle, reader, this);
+     } catch {
+        handle.Free();
+        throw;
+     }
+  }
 
 %enddef
+
+%typemap(cscode, noblock="1") GDALAsyncReaderShadow {
+  public virtual object Buffer { get; }
+}
 
 %typemap(cscode, noblock="1") GDALDatasetShadow {
 /*! Eight bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_Byte,byte)
@@ -200,6 +221,11 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
 /*! Thirty two bit signed integer */ %ds_rasterio_functions(DataType.GDT_Int32,int)
 /*! Thirty two bit floating point */ %ds_rasterio_functions(DataType.GDT_Float32,float)
 /*! Sixty four bit floating point */ %ds_rasterio_functions(DataType.GDT_Float64,double)
+
+public void EndAsyncReader(AsyncReader asyncReader) {
+    EndAsyncReader_Internal(asyncReader);
+	asyncReader?.Dispose();
+  }
 
 public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALProgressFuncDelegate callback, string callback_data, string[] options) {
       int retval;
@@ -397,3 +423,23 @@ GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *pnData
 }
 
 %clear (vsi_l_offset *pnDataLength);
+
+%pragma(csharp) imclasscode=%{
+  internal class AsyncReaderWrapper : AsyncReader {
+    private int m_Disposed;
+    private readonly GCHandle m_BufferHandle;	
+	public override object Buffer => m_BufferHandle.Target;
+    public AsyncReaderWrapper(GCHandle buffer, AsyncReader reader, Dataset parent)
+      : base(getCPtrAndDisown(reader, null).Handle, true, parent) {
+      m_BufferHandle = buffer;
+    }
+    public override void Dispose() {
+      if (System.Threading.Interlocked.CompareExchange(ref m_Disposed, 1, 0) == 0) {
+		if (swigCMemOwn && swigParentRef is Dataset ds)
+		  ds.EndAsyncReader_Internal(this);
+        m_BufferHandle.Free();
+        base.Dispose();
+      }
+    }
+  }
+%}

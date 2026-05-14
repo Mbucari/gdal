@@ -98,7 +98,9 @@ GIntBig ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize
 typedef struct
 {
     GDALAsyncReaderH  hAsyncReader;
+#if defined(SWIGPYTHON)
     void             *pyObject;
+#endif
 } GDALAsyncReaderWrapper;
 
 typedef void* GDALAsyncReaderWrapperH;
@@ -123,6 +125,7 @@ static void* AsyncReaderWrapperGetPyObject(GDALAsyncReaderWrapperH hWrapper)
 
 static void DeleteAsyncReaderWrapper(GDALAsyncReaderWrapperH hWrapper)
 {
+    CPLError(CE_Debug, CPLE_AppDefined, "DeleteAsyncReaderWrapper");
     GDALAsyncReaderWrapper* psWrapper = (GDALAsyncReaderWrapper*)hWrapper;
     if (psWrapper->hAsyncReader != NULL)
     {
@@ -135,35 +138,42 @@ static void DeleteAsyncReaderWrapper(GDALAsyncReaderWrapperH hWrapper)
 %}
 
 #if defined(SWIGPYTHON)
-
 %nothread;
+#endif
 
 %{
 
-static GDALAsyncReaderWrapper* CreateAsyncReaderWrapper(GDALAsyncReaderH  hAsyncReader,
-                                                        void             *pyObject)
+static GDALAsyncReaderWrapper* CreateAsyncReaderWrapper(GDALAsyncReaderH   hAsyncReader
+#if defined(SWIGPYTHON)
+                                                       ,void             *pyObject
+#endif
+)
 {
     GDALAsyncReaderWrapper* psWrapper = (GDALAsyncReaderWrapper* )CPLMalloc(sizeof(GDALAsyncReaderWrapper));
     psWrapper->hAsyncReader = hAsyncReader;
+#if defined(SWIGPYTHON)
     psWrapper->pyObject = pyObject;
     Py_INCREF((PyObject*) psWrapper->pyObject);
+#endif
     return psWrapper;
 }
 
 static void DisableAsyncReaderWrapper(GDALAsyncReaderWrapperH hWrapper)
 {
     GDALAsyncReaderWrapper* psWrapper = (GDALAsyncReaderWrapper*)hWrapper;
+#if defined(SWIGPYTHON)
     if (psWrapper->pyObject)
     {
         Py_XDECREF((PyObject*) psWrapper->pyObject);
     }
     psWrapper->pyObject = NULL;
+#endif
     psWrapper->hAsyncReader = NULL;
 }
 %}
 
+#if defined(SWIGPYTHON)
 %thread;
-
 #endif
 
 class GDALAsyncReaderShadow {
@@ -208,7 +218,12 @@ public:
     %clear (void** ppRetPyObject );
 #endif
 
-    int LockBuffer( double timeout )
+#if defined(SWIGPYTHON)
+    int
+#else
+	bool
+#endif
+    LockBuffer( double timeout )
     {
         GDALAsyncReaderH hReader = AsyncReaderWrapperGetReader(self);
         if (hReader == NULL)
@@ -604,6 +619,8 @@ public:
 
 #ifdef SWIGPYTHON
 %feature("kwargs") AdviseRead;
+#else
+%apply (int *INOUT) { (int *buf_xsize), (int *buf_ysize) };
 #endif
 %apply (int *optional_int) { (GDALDataType *buf_type) };
 #if defined(SWIGCSHARP)
@@ -634,12 +651,52 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                                  nxsize, nysize, ntype,
                                  band_list, pband_list, options);
 }
+#if !defined(SWIGPYTHON)
+%clear (int *buf_xsize), (int *buf_ysize);
+#endif
 %clear (GDALDataType *buf_type);
 #if defined(SWIGCSHARP)
 %clear int *pband_list;
 #else
 %clear (int band_list, int *pband_list );
 #endif
+
+#if !defined(SWIGJAVA)
+#if defined(SWIGCSHARP)
+%newobject BeginAsyncReader;
+%apply (void *buffer_ptr) {void *buffer};
+%apply (int argin[ANY]) {int *bandMap};
+GDALAsyncReaderShadow* BeginAsyncReader(
+       int xOff, int yOff, int xSize, int ySize,
+       void* buffer, int buf_xSize, int buf_ySize, GDALDataType buf_type = (GDALDataType)0,
+       int bandCount = 0, int *bandMap = 0, int pixelSpace = 0,
+       int lineSpace = 0, int bandSpace = 0, char **options = 0){
+  GDALAsyncReaderH hAsyncReader
+    = GDALBeginAsyncReader(self, xOff, yOff, xSize, ySize, buffer, buf_xSize, buf_ySize,
+              buf_type, bandCount, bandMap, pixelSpace, lineSpace, bandSpace, options);
+
+  return hAsyncReader == NULL ? NULL :
+    (GDALAsyncReaderShadow*) CreateAsyncReaderWrapper(hAsyncReader);
+}
+%clear (void *buffer), (int *bandMap);
+
+%apply SWIGTYPE *DISOWN {GDALAsyncReaderShadow *ario};
+%csmethodmodifiers EndAsyncReader "internal";
+%rename (EndAsyncReader_Internal) EndAsyncReader;
+#endif // defined(SWIGCSHARP)
+
+void EndAsyncReader(GDALAsyncReaderShadow* ario) {
+  if( ario == NULL ) return;
+  GDALAsyncReaderH hReader = AsyncReaderWrapperGetReader(ario);
+  if (hReader == NULL) return;
+  GDALEndAsyncReader(self, hReader);
+  DisableAsyncReaderWrapper(ario);
+}
+
+#if defined(SWIGCSHARP)
+%clear GDALAsyncReaderShadow *ario;
+#endif
+#endif // !defined(SWIGJAVA)
 
 /* NEEDED */
 /* GetSubDatasets */
@@ -738,18 +795,6 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
 %clear (size_t buf_len, char *buf_string, void* pyObject);
 %clear(int*);
 
-  void EndAsyncReader(GDALAsyncReaderShadow* ario){
-    if( ario == NULL ) return;
-    GDALAsyncReaderH hReader = AsyncReaderWrapperGetReader(ario);
-    if (hReader == NULL)
-    {
-        return;
-    }
-    GDALEndAsyncReader(self, hReader);
-    DisableAsyncReaderWrapper(ario);
-  }
-
-#ifdef SWIGPYTHON
 %apply (int nList, int* pList) { (int nBandCount, int *panBandList) };
 %feature ("kwargs") GetInterBandCovarianceMatrix;
   void GetInterBandCovarianceMatrix(CPLErr *peErr, int *nRows, int *nCols, double **pMatrix,
@@ -807,7 +852,6 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                 approx_ok, write_into_metadata, delta_degree_of_freedom,
                 callback, callback_data);
   }
-#endif
 
 %feature( "kwargs" ) GetVirtualMem;
 %newobject GetVirtualMem;

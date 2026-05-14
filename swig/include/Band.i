@@ -627,6 +627,8 @@ CPLErr SetDefaultHistogram( double min, double max,
 
 #ifdef SWIGPYTHON
 %feature("kwargs") AdviseRead;
+#else
+%apply (int *INOUT) { (int *buf_xsize), (int *buf_ysize) };
 #endif
 %apply (int *optional_int) { (GDALDataType *buf_type) };
 CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
@@ -645,6 +647,9 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     return GDALRasterAdviseRead(self, xoff, yoff, xsize, ysize,
                                 nxsize, nysize, ntype, options);
 }
+#if !defined(SWIGPYTHON)
+%clear (int *buf_xsize), (int *buf_ysize);
+#endif
 %clear (GDALDataType *buf_type);
 %clear (int band_list, int *pband_list );
 
