@@ -125,7 +125,6 @@ static void* AsyncReaderWrapperGetPyObject(GDALAsyncReaderWrapperH hWrapper)
 
 static void DeleteAsyncReaderWrapper(GDALAsyncReaderWrapperH hWrapper)
 {
-    CPLError(CE_Debug, CPLE_AppDefined, "DeleteAsyncReaderWrapper");
     GDALAsyncReaderWrapper* psWrapper = (GDALAsyncReaderWrapper*)hWrapper;
     if (psWrapper->hAsyncReader != NULL)
     {
