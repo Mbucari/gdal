@@ -1030,6 +1030,15 @@ GDALDriverShadow *IdentifyDriverEx( const char* path,
 %clear char **allowed_drivers;
 %clear char **sibling_files;
 
+#if defined(SWIGCSHARP)
+%inline %{
+static void GetOpenDatasets(GDALDatasetShadow **hDS, int *pnCount)
+{
+    GDALGetOpenDatasets((GDALDatasetH **)hDS, pnCount);
+}
+%}
+#endif
+
 
 //************************************************************************
 //

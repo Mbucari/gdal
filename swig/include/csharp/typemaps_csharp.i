@@ -503,3 +503,26 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
         $excode
         return ret;
 }
+
+/******************************************************************************
+ * (GDALDatasetShadow ** hDS, int* pnCount) to out Dataset typemap            *
+ *****************************************************************************/
+ 
+%typemap(in) (GDALDatasetShadow ** hDS, int* pnCount) {
+  /* %typemap(in) (GDALDatasetShadow ** hDS, int* pnCount) */
+  uintptr_t* arrAndlen = static_cast<uintptr_t*>($input);
+  $1 = (GDALDatasetShadow**)(arrAndlen);
+  $2 = (int*)(arrAndlen + 1);
+}
+%typemap(imtype) (GDALDatasetShadow ** hDS, int* pnCount) "IntPtr[]"
+%typemap(cstype) (GDALDatasetShadow ** hDS, int* pnCount) "out Dataset[]"
+%typemap(csin, cshin="out $csinput",
+  pre= "
+    /* %typemap(csin) (GDALDatasetShadow ** hDS, int* pnCount) */
+    IntPtr[] temp$csinput = new IntPtr[2];",
+  post="
+    int count = temp$csinput[0] == IntPtr.Zero ? 0 : (int)temp$csinput[1];
+    $csinput = new Dataset[count];
+    for (int i = 0; i < count; i++)
+        $csinput[i] = new Dataset(System.Runtime.InteropServices.Marshal.ReadIntPtr(temp$csinput[0], i * IntPtr.Size), false, null);")
+    (GDALDatasetShadow ** hDS, int* pnCount) "temp$csinput"
