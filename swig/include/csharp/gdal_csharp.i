@@ -215,6 +215,12 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
   public virtual object Buffer { get; }
 }
 
+%typemap(csimports) GDALDatasetShadow %{
+using System;
+using System.Runtime.InteropServices;
+using OSGeo.OGR;
+%}
+
 %typemap(cscode, noblock="1") GDALDatasetShadow {
 /*! Eight bit unsigned integer */ %ds_rasterio_functions(DataType.GDT_Byte,byte)
 /*! Sixteen bit signed integer */ %ds_rasterio_functions(DataType.GDT_Int16,short)
@@ -225,6 +231,16 @@ DEFINE_EXTERNAL_CLASS(OGRFeatureShadow, OSGeo.OGR.Feature)
 public void EndAsyncReader(AsyncReader asyncReader) {
     EndAsyncReader_Internal(asyncReader);
 	asyncReader?.Dispose();
+  }
+
+public Feature GetNextFeature(out Layer belongingLayer, out double progressPct, $module.GDALProgressFuncDelegate callback = null, string callback_data = null) {
+	IntPtr ppoBelongingLayer = IntPtr.Zero;
+    double pdfProgressPct = 0;
+	Feature feature = GetNextFeature(ref ppoBelongingLayer, ref pdfProgressPct, callback, callback_data);
+	progressPct = pdfProgressPct;
+	belongingLayer = ppoBelongingLayer == IntPtr.Zero ? null
+      : new Layer(ppoBelongingLayer, false, this);
+	return feature;	
   }
 
 public int BuildOverviews( string resampling, int[] overviewlist, $module.GDALProgressFuncDelegate callback, string callback_data, string[] options) {
