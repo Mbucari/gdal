@@ -940,6 +940,16 @@ public:
   }
 #endif
 
+%newobject FromUserInput;
+  static OSRSpatialReferenceShadow* FromUserInput( const char *name, char** options = NULL ) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRSetFromUserInputEx(pSr, name, options) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
+  }
+
   OGRErr CopyGeogCSFrom( OSRSpatialReferenceShadow *rhs ) {
     return OSRCopyGeogCSFrom( self, rhs );
   }
@@ -1014,8 +1024,34 @@ public:
   }
 %clear (char **);
 
+#if defined(SWIGCSHARP)
+  OGRErr ImportFromWkt( char *wkt ) {
+    return OSRImportFromWkt( self, &wkt );
+  }
+#endif
+
+%newobject FromWkt;
+  static OSRSpatialReferenceShadow* FromWkt( char *wkt ) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromWkt(pSr, &wkt) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
+  }
+
   OGRErr ImportFromProj4( char *ppszInput ) {
     return OSRImportFromProj4( self, ppszInput );
+  }
+
+%newobject FromProj4;
+  static OSRSpatialReferenceShadow* FromProj4( char *ppszInput ) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromProj4(pSr, ppszInput) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
   }
 
 %apply Pointer NONNULL {char* url};
@@ -1023,23 +1059,75 @@ public:
     return OSRImportFromUrl( self, url );
   }
 
+%newobject FromUrl;
+  static OSRSpatialReferenceShadow* FromUrl( char *url ) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromUrl(pSr, url) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
+  }
+
 %apply (char **options) { (char **) };
   OGRErr ImportFromESRI( char **ppszInput ) {
     return OSRImportFromESRI( self, ppszInput );
   }
+
+%newobject FromESRI;
+  static OSRSpatialReferenceShadow* FromESRI( char **ppszInput ) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromESRI(pSr, ppszInput) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
+  }
+
 %clear (char **);
 
   OGRErr ImportFromEPSG( int arg ) {
     return OSRImportFromEPSG(self, arg);
   }
 
+%newobject FromEPSG;
+  static OSRSpatialReferenceShadow* FromEPSG(int epsgCode) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromEPSG(pSr, epsgCode) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
+  }
+
   OGRErr ImportFromEPSGA( int arg ) {
     return OSRImportFromEPSGA(self, arg);
+  }
+
+%newobject FromEPSGA;
+  static OSRSpatialReferenceShadow* FromEPSGA(int epsgaCode) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromEPSGA(pSr, epsgaCode) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
   }
 
   OGRErr ImportFromPCI( char const *proj, char const *units = "METRE",
                         double argin[17] = 0 ) {
     return OSRImportFromPCI( self, proj, units, argin );
+  }
+
+%newobject FromPCI;
+  static OSRSpatialReferenceShadow* FromPCI( char const *proj,
+                        char const *units = "METRE", double argin[17] = 0) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromPCI(pSr, proj, units, argin) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
   }
 
   OGRErr ImportFromUSGS( long proj_code, long zone = 0,
@@ -1048,8 +1136,29 @@ public:
     return OSRImportFromUSGS( self, proj_code, zone, argin, datum_code );
   }
 
+%newobject FromUSGS;
+  static OSRSpatialReferenceShadow* FromUSGS( long proj_code, long zone = 0,
+                         double argin[15] = 0, long datum_code = 0 ) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromUSGS(pSr, proj_code, zone, argin, datum_code ) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
+  }
+
   OGRErr ImportFromXML( char const *xmlString ) {
     return OSRImportFromXML( self, xmlString );
+  }
+
+%newobject FromXML;
+  static OSRSpatialReferenceShadow* FromXML( char const *xmlString ) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromXML(pSr, xmlString) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
   }
 
 %apply Pointer NONNULL {char const *proj};
@@ -1059,8 +1168,29 @@ public:
     return OSRImportFromERM( self, proj, datum, units );
   }
 
+%newobject FromERM;
+  static OSRSpatialReferenceShadow* FromERM( char const *proj, char const *datum,
+                        char const *units ) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromERM(pSr, proj, datum, units) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
+  }
+
   OGRErr ImportFromMICoordSys( char const *pszCoordSys ) {
     return OSRImportFromMICoordSys( self, pszCoordSys );
+  }
+
+%newobject FromMICoordSys;
+  static OSRSpatialReferenceShadow* FromMICoordSys( char const *pszCoordSys ) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromMICoordSys(pSr, pszCoordSys) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
   }
 
 %apply Pointer NONNULL {const char* const *papszLines};
@@ -1069,10 +1199,30 @@ public:
     return OSRImportFromOzi( self, papszLines );
   }
 
+%newobject FromOzi;
+  static OSRSpatialReferenceShadow* FromOzi( const char* const *papszLines ) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromOzi(pSr, papszLines) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
+  }
+
 %apply Pointer NONNULL {const char* const *keyValues};
 %apply (char **options) { char ** keyValues };
   OGRErr ImportFromCF1( char** keyValues, const char* units = NULL) {
       return OSRImportFromCF1(self, keyValues, units);
+  }
+
+%newobject FromCF1;
+  static OSRSpatialReferenceShadow* FromCF1( char** keyValues, const char* units = NULL) {
+    OSRSpatialReferenceShadow* pSr = (OSRSpatialReferenceShadow*) OSRNewSpatialReference(NULL);
+    if (OSRImportFromCF1(pSr, keyValues, units) != OGRERR_NONE) {
+	  OSRRelease(pSr);
+	  return NULL;
+	}
+	return pSr;
   }
 %clear (char **);
 
