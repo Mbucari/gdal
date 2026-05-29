@@ -596,7 +596,7 @@ void GDAL_GCP_set_Id( GDAL_GCP *gcp, const char * pszId ) {
 
 %clear GDAL_GCP *gcp;
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (GCPsToGeoTransform) wrapper_GDALGCPsToGeoTransform;
 %inline
 {
@@ -613,7 +613,7 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 %clear (RETURN_NONE);
 #endif
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (GCPsToHomography) wrapper_GDALGCPsToHomography;
 %inline
 {
@@ -1372,7 +1372,7 @@ struct GDALWarpAppOptions {
 }
 };
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Warp) wrapper_GDALWarpDestDS;
 #endif
 
@@ -1420,7 +1420,7 @@ int wrapper_GDALWarpDestDS( GDALDatasetShadow* dstDS,
 %}
 %clear GDALDatasetShadow* dstDS;
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (Warp) wrapper_GDALWarpDestName;
 #endif
 
@@ -2164,7 +2164,7 @@ struct GDALBuildVRTOptions {
 
 #ifdef SWIGPYTHON
 %rename (BuildVRTInternalObjects) wrapper_GDALBuildVRT_objects;
-#elif defined(SWIGJAVA)
+#else
 %rename (BuildVRT) wrapper_GDALBuildVRT_objects;
 #endif
 
@@ -2211,7 +2211,7 @@ GDALDatasetShadow* wrapper_GDALBuildVRT_objects( const char* dest,
 
 #ifdef SWIGPYTHON
 %rename (BuildVRTInternalNames) wrapper_GDALBuildVRT_names;
-#elif defined(SWIGJAVA)
+#else
 %rename (BuildVRT) wrapper_GDALBuildVRT_names;
 #endif
 
@@ -2346,7 +2346,7 @@ struct GDALMultiDimTranslateOptions {
 }
 };
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %rename (MultiDimTranslate) wrapper_GDALMultiDimTranslateDestName;
 #endif
 
