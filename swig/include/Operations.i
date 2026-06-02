@@ -481,8 +481,10 @@ int wrapper_GridCreate( char* algorithmOptions,
 /*                          ContourGenerate()                           */
 /************************************************************************/
 
-#ifndef SWIGJAVA
+#ifdef SWIGPYTHON
 %feature( "kwargs" ) ContourGenerate;
+#elif defined(SWIGCSHARP)
+%apply bool {int useNoData};
 #endif
 %apply Pointer NONNULL {GDALRasterBandShadow *srcBand, OGRLayerShadow* dstLayer};
 %apply (int nList, double *pList ) { (int fixedLevelCount, double *fixedLevels ) };
