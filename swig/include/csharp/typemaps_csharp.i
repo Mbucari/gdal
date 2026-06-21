@@ -31,26 +31,26 @@
 %}
 
 %typemap(csdisposing, methodname="Dispose", methodmodifiers="public", parameters="") SWIGTYPE {
-    lock(this) {
-      if (swigCPtr.Handle != global::System.IntPtr.Zero) {
+    lock(m_LockObject) {
+      if ($csclassname_swigCPtr.HasValue && $csclassname_swigCPtr.Value.Handle != global::System.IntPtr.Zero) {
         if (swigCMemOwn) {
           swigCMemOwn = false;
           $imcall;
         }
-        swigCPtr = new global::System.Runtime.InteropServices.HandleRef(null, global::System.IntPtr.Zero);
+        $csclassname_swigCPtr = null;
       }
       global::System.GC.SuppressFinalize(this);
     }
   }
 
 %typemap(csdisposing_derived, methodname="Dispose", methodmodifiers="public", parameters="") SWIGTYPE {
-    lock(this) {
-      if (swigCPtr.Handle != global::System.IntPtr.Zero) {
+    lock(m_LockObject) {
+      if ($csclassname_swigCPtr.HasValue && $csclassname_swigCPtr.Value.Handle != global::System.IntPtr.Zero) {
         if (swigCMemOwn) {
           swigCMemOwn = false;
           $imcall;
         }
-        swigCPtr = new global::System.Runtime.InteropServices.HandleRef(null, global::System.IntPtr.Zero);
+        $csclassname_swigCPtr = null;
       }
       global::System.GC.SuppressFinalize(this);
       base.Dispose();
