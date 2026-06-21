@@ -16,47 +16,6 @@
 %include "arrays_csharp.i"
 %include "csharp_strings.i"
 
-/* CSHARP TYPEMAPS */
-
-%typemap(csdispose) SWIGTYPE %{
-  ~$csclassname() {
-    Dispose();
-  }
-%}
-
-%typemap(csdispose_derived) SWIGTYPE %{
-  ~$csclassname() {
-    Dispose();
-  }
-%}
-
-%typemap(csdisposing, methodname="Dispose", methodmodifiers="public", parameters="") SWIGTYPE {
-    lock(m_LockObject) {
-      if ($csclassname_swigCPtr.HasValue && $csclassname_swigCPtr.Value.Handle != global::System.IntPtr.Zero) {
-        if (swigCMemOwn) {
-          swigCMemOwn = false;
-          $imcall;
-        }
-        $csclassname_swigCPtr = null;
-      }
-      global::System.GC.SuppressFinalize(this);
-    }
-  }
-
-%typemap(csdisposing_derived, methodname="Dispose", methodmodifiers="public", parameters="") SWIGTYPE {
-    lock(m_LockObject) {
-      if ($csclassname_swigCPtr.HasValue && $csclassname_swigCPtr.Value.Handle != global::System.IntPtr.Zero) {
-        if (swigCMemOwn) {
-          swigCMemOwn = false;
-          $imcall;
-        }
-        $csclassname_swigCPtr = null;
-      }
-      global::System.GC.SuppressFinalize(this);
-      base.Dispose();
-    }
-  }
-
 %apply (int) {VSI_RETVAL};
 
 %fragment("OGRErrMessages","header") %{

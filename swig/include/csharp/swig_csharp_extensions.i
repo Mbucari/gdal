@@ -49,7 +49,7 @@
 // Proxy classes (base classes, i.e, not derived classes)
 %typemap(csbody) SWIGTYPE %{
   private HandleRef? $csclassname_swigCPtr;
-  private HandleRef swigCPtr { get { lock (m_LockObject) { return $csclassname_swigCPtr ?? throw new ObjectDisposedException(GetType().FullName); } } }
+  private HandleRef swigCPtr { get { lock (m_LockObject) { return $csclassname_swigCPtr ?? throw new ObjectDisposedException(typeof($csclassname).FullName); } } }
   protected readonly object m_LockObject = new object();
   protected bool swigCMemOwn;
   protected object swigParentRef;
@@ -92,11 +92,10 @@
 %}
 
 
-#if SWIG_VERSION > 0x020000
 // Derived proxy classes
 %typemap(csbody_derived) SWIGTYPE %{
   private HandleRef? $csclassname_swigCPtr;
-  private HandleRef swigCPtr { get { lock (m_LockObject) { return $csclassname_swigCPtr ?? throw new ObjectDisposedException(GetType().FullName); } } }
+  private HandleRef swigCPtr { get { lock (m_LockObject) { return $csclassname_swigCPtr ?? throw new ObjectDisposedException(typeof($csclassname).FullName); } } }
   
   public $csclassname(IntPtr cPtr, bool cMemoryOwn, object parent) : base($modulePINVOKE.$csclassname_SWIGUpcast(cPtr), cMemoryOwn, parent) {
     $csclassname_swigCPtr = new HandleRef(this, cPtr);
@@ -129,49 +128,13 @@
     }
   }
 %}
-#else
-// Derived proxy classes
-%typemap(csbody_derived) SWIGTYPE %{
-  private HandleRef? $csclassname_swigCPtr;
-  private HandleRef swigCPtr { get { lock (m_LockObject) { return $csclassname_swigCPtr ?? throw new ObjectDisposedException(GetType().FullName); } } }
 
-  public $csclassname(IntPtr cPtr, bool cMemoryOwn, object parent) : base($modulePINVOKE.$csclassnameUpcast(cPtr), cMemoryOwn, parent) {
-    $csclassname_swigCPtr = new HandleRef(this, cPtr);
-  }
-  public static HandleRef getCPtr($csclassname obj) {
-    return (obj == null) ? new HandleRef(null, IntPtr.Zero) : obj.swigCPtr;
-  }
-  public static HandleRef getCPtrAndDisown($csclassname obj, object parent) {
-    if (obj != null)
-    {
-      obj.swigCMemOwn = false;
-      obj.swigParentRef = parent;
-      return obj.swigCPtr;
-    }
-    else
-    {
-      return new HandleRef(null, IntPtr.Zero);
-    }
-  }
-  public static HandleRef getCPtrAndSetReference($csclassname obj, object parent) {
-    if (obj != null)
-    {
-      obj.swigParentRef = parent;
-      return obj.swigCPtr;
-    }
-    else
-    {
-      return new HandleRef(null, IntPtr.Zero);
-    }
-  }
-%}
-#endif
 
 // Typewrapper classes
 %typemap(csbody) SWIGTYPE *, SWIGTYPE &, SWIGTYPE [], SWIGTYPE (CLASS::*) %{
   protected readonly object m_LockObject = new object();
   private HandleRef? $csclassname_swigCPtr;
-  private HandleRef swigCPtr { get { lock (m_LockObject) { return $csclassname_swigCPtr ?? throw new ObjectDisposedException(GetType().FullName); } } }
+  private HandleRef swigCPtr { get { lock (m_LockObject) { return $csclassname_swigCPtr ?? throw new ObjectDisposedException(typeof($csclassname).FullName); } } }
 
   public $csclassname(IntPtr cPtr, bool futureUse, object parent) {
     $csclassname_swigCPtr = new HandleRef(this, cPtr);
@@ -187,6 +150,12 @@
 %}
 
 %typemap(csdispose) SWIGTYPE %{
+  ~$csclassname() {
+    Dispose();
+  }
+%}
+
+%typemap(csdispose_derived) SWIGTYPE %{
   ~$csclassname() {
     Dispose();
   }
@@ -208,7 +177,7 @@
     }
   }
 
-%typemap(csdisposing_derived, methodname="Dispose", methodmodifiers="public") TYPE {
+%typemap(csdisposing_derived, methodname="Dispose", methodmodifiers="public") SWIGTYPE {
   lock(m_LockObject) {
       if($csclassname_swigCPtr.HasValue && $csclassname_swigCPtr.Value.Handle != IntPtr.Zero && swigCMemOwn) {
         swigCMemOwn = false;
