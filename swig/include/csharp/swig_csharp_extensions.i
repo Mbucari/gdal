@@ -129,26 +129,6 @@
   }
 %}
 
-
-// Typewrapper classes
-%typemap(csbody) SWIGTYPE *, SWIGTYPE &, SWIGTYPE [], SWIGTYPE (CLASS::*) %{
-  protected readonly object m_LockObject = new object();
-  private HandleRef? $csclassname_swigCPtr;
-  private HandleRef swigCPtr { get { lock (m_LockObject) { return $csclassname_swigCPtr ?? throw new ObjectDisposedException(typeof($csclassname).FullName); } } }
-
-  public $csclassname(IntPtr cPtr, bool futureUse, object parent) {
-    $csclassname_swigCPtr = new HandleRef(this, cPtr);
-  }
-
-  protected $csclassname() {
-    $csclassname_swigCPtr = new HandleRef(null, IntPtr.Zero);
-  }
-
-  public static HandleRef getCPtr($csclassname obj) {
-    return (obj == null) ? new HandleRef(null, IntPtr.Zero) : obj.swigCPtr;
-  }
-%}
-
 %typemap(csdispose) SWIGTYPE %{
   ~$csclassname() {
     Dispose();
