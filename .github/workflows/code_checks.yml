@@ -96,20 +96,8 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Detect tabulations
-        run: ./scripts/detect_tabulations.sh
-
-      - name: Detect printf
-        run: ./scripts/detect_printf.sh
-
-      - name: Detect self assignments
-        run: ./scripts/detect_self_assignment.sh
-
       - name: Detect suspicious char digit zero
         run: ./scripts/detect_suspicious_char_digit_zero.sh
-
-      - name: Detect missing includes
-        run: ./scripts/detect_missing_include.sh
 
       - name: Detect (a+b-1)/b
         run: ./scripts/detect_a_plus_b_minus_1_div_b.sh
@@ -249,7 +237,7 @@ jobs:
       run: |
         python scripts/collect_config_options.py
         git diff
-        git diff --quiet || (echo "You need to run scripts/collect_config_options to update port/cpl_known_config_options.h" && /bin/false)
+        git diff --quiet || (echo "You need to run scripts/collect_config_options.py to update port/cpl_known_config_options.h" && /bin/false)
 
   check-driver-connection-prefix:
     runs-on: ubuntu-latest

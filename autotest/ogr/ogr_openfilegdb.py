@@ -1542,6 +1542,33 @@ def test_ogr_openfilegdb_spx_spatial_filter():
 
 
 ###############################################################################
+# Test spatial filtering on a Web Mercator layer and its .spx index.
+# PROJ >= 9.7.1 gives it a lat/long base CRS, and the filter then used
+# minY=0 and maxY=0.
+# See https://github.com/OSGeo/gdal/issues/15337
+
+
+@pytest.mark.parametrize("use_spatial_index", ["YES", "NO"])
+def test_ogr_openfilegdb_spx_spatial_filter_web_mercator(use_spatial_index):
+
+    with gdaltest.config_option("OPENFILEGDB_USE_SPATIAL_INDEX", use_spatial_index):
+        ds = ogr.Open("data/filegdb/test_web_mercator_spatial_index.gdb.zip")
+
+        # Use one layer per query, as only the first spatial filter
+        # on a layer is clamped
+        lyr = ds.GetLayerByName("north")
+        lyr.SetSpatialFilterRect(-8836500, 5410000, -8835500, 5411000)
+        assert lyr.GetFeatureCount() == 1
+        assert [f.GetFID() for f in lyr] == [1]
+
+        # Southern hemisphere filter
+        lyr = ds.GetLayerByName("south")
+        lyr.SetSpatialFilterRect(999500, -4000500, 1000500, -3999500)
+        assert lyr.GetFeatureCount() == 1
+        assert [f.GetFID() for f in lyr] == [1]
+
+
+###############################################################################
 # Test reading a broken .spx that has an index depth of 1 instead of 2
 # Simulates scenario of SWISSTLM3D_2022_LV95_LN02.gdb/a00000019.spx
 # from https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.gdb.zip
@@ -1585,6 +1612,42 @@ def test_ogr_openfilegdb_read_broken_spx_wrong_index_depth():
     ds = None
 
     gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+# Test that a stale attribute index (with entries for deleted features) is
+# ignored with a warning, and not an error
+# See https://github.com/OSGeo/gdal/issues/15505
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_openfilegdb_read_stale_attribute_index(tmp_vsimem):
+
+    dirname = tmp_vsimem / "test_ogr_openfilegdb_read_stale_attribute_index.gdb"
+    ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    for i in range(1, 4):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = f"v{i}"
+        lyr.CreateFeature(f)
+    ds.ExecuteSQL("CREATE INDEX idx_str ON test(str)")
+    ds = None
+
+    # GDAL updates the index when deleting features, so restore the index
+    # from before the deletion
+    atx = str(dirname / "a00000009.idx_str.atx")
+    gdal.CopyFile(atx, atx + ".bak")
+    ds = ogr.Open(dirname, update=1)
+    ds.GetLayer(0).DeleteFeature(1)
+    ds = None
+    gdal.CopyFile(atx + ".bak", atx)
+
+    ds = ogr.Open(dirname)
+    lyr = ds.GetLayer(0)
+    with gdaltest.error_raised(gdal.CE_Warning, "is out of date"):
+        lyr.SetAttributeFilter("str = 'v2'")
+    assert [f.GetFID() for f in lyr] == [2]
 
 
 ###############################################################################
